@@ -1463,15 +1463,19 @@ class InstallCommand(Command):
         cur_site.domain = site.domain_name
         cur_site.save()
 
+        
+
         if site.media_url.startswith("http"):
             site_media_url = site.media_url
         else:
             site_media_url = site.site_root + site.media_url
 
+
         site_media_root = os.path.join(site.abs_install_dir, "htdocs", "media")
 
         siteconfig = SiteConfiguration.objects.get_current()
         siteconfig.set("site_media_url", site_media_url)
+        siteconfig.set("site_review_model", site_review_model)
         siteconfig.set("site_media_root", site_media_root)
         siteconfig.set("site_admin_name", site.admin_user)
         siteconfig.set("site_admin_email", site.admin_email)
