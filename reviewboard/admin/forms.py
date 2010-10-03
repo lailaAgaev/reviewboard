@@ -66,7 +66,6 @@ class GeneralSettingsForm(SiteSettingsForm):
         label=_("Administrator Name"),
         required=True,
         widget=forms.TextInput(attrs={'size': '30'}))
-
     site_admin_email = forms.EmailField(
         label=_("Administrator E-Mail"),
         required=True,
@@ -77,12 +76,6 @@ class GeneralSettingsForm(SiteSettingsForm):
         required=True,
         choices=[(tz, tz) for tz in pytz.common_timezones],
         help_text=_("The time zone used for all dates on this server."))
-
-    site_review_model = forms.ChoiceField(
-        label=_("Review Model"),
-        required=True,
-        choices=[("0","Pre-commit"), ("1","Post-commit")],
-        help_text=_("Whether reviews are submitted for committed revisions or uncommitted code."))
 
     search_enable = forms.BooleanField(
         label=_("Enable search"),
@@ -141,7 +134,7 @@ class GeneralSettingsForm(SiteSettingsForm):
 
     class Meta:
         title = _("General Settings")
-        save_blacklist = ('server')
+        save_blacklist = ('server',)
 
         fieldsets = (
             {
@@ -150,8 +143,7 @@ class GeneralSettingsForm(SiteSettingsForm):
                 'fields':  ('server', 'site_media_url',
                             'site_admin_name',
                             'site_admin_email',
-                            'locale_timezone',
-                            'site_review_model'),
+                            'locale_timezone'),
             },
             {
                 'classes': ('wide',),

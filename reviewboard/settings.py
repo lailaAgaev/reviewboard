@@ -177,7 +177,7 @@ MEDIA_ROOT = os.path.join(HTDOCS_ROOT, 'media')
 #
 # Examples: "http://foo.com/media/", "/media/".
 MEDIA_URL = getattr(settings_local, 'MEDIA_URL', SITE_ROOT + 'media/')
-REVIEW_MODEL = getattr(settings_local, 'REVIEW_MODEL', '0')
+
 
 # Base these on the user's SITE_ROOT.
 LOGIN_URL = SITE_ROOT + 'account/login/'

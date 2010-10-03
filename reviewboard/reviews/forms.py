@@ -5,8 +5,6 @@ from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.utils.translation import ugettext as _
 
-from djblets.siteconfig.models import SiteConfiguration
-
 from reviewboard.diffviewer import forms as diffviewer_forms
 from reviewboard.diffviewer.models import DiffSet
 from reviewboard.reviews.errors import OwnershipError
@@ -63,35 +61,27 @@ class NewReviewRequestForm(forms.Form):
     such as Perforce).
     """
     NO_REPOSITORY_ENTRY = _('(None - Graphics only)')
+
     basedir = forms.CharField(
-        label=_("Base Directory:"),
+        label=_("Base Directory"),
         required=False,
         help_text=_("The absolute path in the repository the diff was "
                     "generated in."),
         widget=forms.TextInput(attrs={'size': '35'}))
     diff_path = forms.FileField(
-        label=_("Diff:"),
+        label=_("Diff"),
         required=False,
         help_text=_("The new diff to upload."),
         widget=forms.FileInput(attrs={'size': '35'}))
     parent_diff_path = forms.FileField(
-        label=_("Parent Diff:"),
+        label=_("Parent Diff"),
         required=False,
         help_text=_("An optional diff that the main diff is based on. "
                     "This is usually used for distributed revision control "
                     "systems (Git, Mercurial, etc.)."),
         widget=forms.FileInput(attrs={'size': '35'}))
-    #review_range_from = forms.CharField(
-     #   label=_("Revision Range From"),
-      #  required=True,
-       # widget=forms.TextInput(attrs={'size': '35'}))
-    review_range_to = forms.CharField(
-        label=_("To:"),
-        required=True,
-        help_text=_("specify the range of revisions to be diff-ed."),
-        widget=forms.TextInput(attrs={'size': '35'}))
     repository = forms.ModelChoiceField(
-        label=_("Repository:"),
+        label=_("Repository"),
         queryset=Repository.objects.filter(visible=True).order_by('name'),
         empty_label=NO_REPOSITORY_ENTRY,
         required=False)
