@@ -448,6 +448,14 @@ $.extend(RB.ReviewRequest.prototype, {
         return new RB.Screenshot(this);
     },
 
+    createUploadedFile: function() {
+        return new RB.UploadedFile(this);
+    },
+
+    createFileComment: function(file_id) {
+        return new RB.UploadedFileComment(file_id);
+    },
+
     /*
      * Ensures that the review request's state is loaded.
      *
@@ -1010,6 +1018,400 @@ $.extend(RB.ReviewReply.prototype, {
     }
 });
 
+RB.UploadedFile = function(review_request, id) {
+    this.review_request = review_request;
+    this.id = id;
+
+    return this;
+}
+
+$.extend(RB.UploadedFile.prototype, {
+    setFile: function(file) {
+        this.file = file;
+    },
+
+    setForm: function(form) {
+        this.form = form;
+    },
+
+    save: function(options) {
+        options = $.extend(true, {
+            success: function() {},
+            error: function() {}
+        }, options);
+
+        if (this.id != undefined) {
+            /* TODO: Support updating files eventually. */
+            options.error("The file " + this.id + " was already " +
+                          "created. This is a script error. Please " +
+                          "report it.");
+            return;
+        }
+
+        if (this.form) {
+            this._saveForm(options);
+        } else if (this.file) {
+            this._saveFile(options);
+        } else {
+            options.error("No data has been set for this file. This " +
+                          "is a script error. Please report it.");
+            return;
+        }
+    },
+
+    _saveForm: function(options) {
+        this._saveApiCall(options.success, options.error, {
+            buttons: options.buttons,
+            form: this.form
+        });
+    },
+
+    _saveFile: function(options) {
+        var boundary = "-----multipartformboundary" + new Date().getTime();
+        var blob = "";
+        blob += "--" + boundary + "\r\n";
+        blob += 'Content-Disposition: form-data; name="path"; ' +
+                           'filename="' + this.file.name + '"\r\n';
+        blob += 'Content-Type: application/octet-stream\r\n';
+        blob += '\r\n';
+        blob += this.file.getAsBinary();
+        blob += '\r\n';
+        blob += "--" + boundary + "--\r\n";
+        blob += '\r\n';
+
+        this._saveApiCall(options.success, options.error, {
+            buttons: options.buttons,
+            data: blob,
+            processData: false,
+            contentType: "multipart/form-data; boundary=" + boundary,
+            xhr: function() {
+                var xhr = $.ajaxSettings.xhr()
+                xhr.send = function(data) {
+                    xhr.sendAsBinary(blob);
+                };
+
+                return xhr;
+            }
+        });
+    },
+
+    _saveApiCall: function(onSuccess, onError, options) {
+        var self = this;
+
+        self.review_request.ready(function() {
+            rbApiCall($.extend(options, {
+                url: self.review_request.links.uploaded_files.href,
+                success: function(rsp) {
+                    if (rsp.stat == "ok") {
+                        if ($.isFunction(onSuccess)) {
+                            onSuccess(rsp, rsp.file);
+                        }
+                    } else if ($.isFunction(onError)) {
+                        onError(rsp, rsp.err.msg);
+                    }
+                }
+            }));
+        });
+    }
+});
+
+RB.ScreenshotComment = function(review, id, screenshot_id, x, y, width,
+                                height) {
+    this.id = id;
+    this.review = review;
+    this.screenshot_id = screenshot_id;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.text = "";
+    this.loaded = false;
+    this.url = null;
+
+    return this;
+}
+
+$.extend(RB.ScreenshotComment.prototype, {
+    ready: function(on_ready) {
+        if (this.loaded) {
+            on_ready();
+        } else {
+            this._load(on_ready);
+        }
+    },
+
+    /*
+     * Sets the current text in the comment block.
+     *
+     * @param {string} text  The new text to set.
+     */
+    setText: function(text) {
+        this.text = text;
+        $.event.trigger("textChanged", null, this);
+    },
+
+    /*
+     * Saves the comment on the server.
+     */
+    save: function(options) {
+        var self = this;
+
+        options = $.extend({
+            success: function() {}
+        }, options);
+
+        self.ready(function() {
+            self.review.ensureCreated(function() {
+                var type;
+                var url;
+                var data = {
+                    text: self.text,
+                    x: self.x,
+                    y: self.y,
+                    w: self.width,
+                    h: self.height
+                };
+
+                if (self.loaded) {
+                    type = "PUT";
+                    url = self.url;
+                } else {
+                    data.screenshot_id = self.screenshot_id;
+                    url = self.review.links.screenshot_comments.href;
+                }
+
+                rbApiCall({
+                    type: type,
+                    url: url,
+                    data: data,
+                    success: function(rsp) {
+                        self._loadDataFromResponse(rsp);
+                        $.event.trigger("saved", null, self);
+                        options.success();
+                    }
+                });
+            });
+        });
+    },
+
+    /*
+     * Deletes the comment from the server.
+     */
+    deleteComment: function() {
+        var self = this;
+
+        self.ready(function() {
+            if (self.loaded) {
+                rbApiCall({
+                    type: "DELETE",
+                    url: self.url,
+                    success: function() {
+                        $.event.trigger("deleted", null, self);
+                        self._deleteAndDestruct();
+                    }
+                });
+            } else {
+                this._deleteAndDestruct();
+            }
+        });
+    },
+
+    deleteIfEmpty: function() {
+        if (this.text != "") {
+            return;
+        }
+
+        this.deleteComment();
+    },
+
+    _deleteAndDestruct: function() {
+        $.event.trigger("destroyed", null, this);
+    },
+
+    _load: function(on_done) {
+        var self = this;
+
+        if (!self.id) {
+            on_done();
+            return;
+        }
+
+        self.review.ready(function() {
+            if (!self.review.loaded) {
+                on_done();
+                return;
+            }
+
+            rbApiCall({
+                type: "GET",
+                url: self.review.links.screenshot_comments.href +
+                     self.id + "/",
+                success: function(rsp, status) {
+                    if (status != 404) {
+                        self._loadDataFromResponse(rsp);
+                    }
+
+                    on_done();
+                },
+            });
+        });
+    },
+
+    _loadDataFromResponse: function(rsp) {
+        this.id = rsp.screenshot_comment.id;
+        this.text = rsp.screenshot_comment.text;
+        this.x = rsp.screenshot_comment.x;
+        this.y = rsp.screenshot_comment.y;
+        this.width = rsp.screenshot_comment.w;
+        this.height = rsp.screenshot_comment.h;
+        this.links = rsp.screenshot_comment.links;
+        this.url = rsp.screenshot_comment.links.self.href;
+        this.loaded = true;
+    }
+});
+
+
+RB.UploadedFileCommentReply = function(reply, id, reply_to_id) {
+    this.id = id;
+    this.reply = reply;
+    this.text = "";
+    this.reply_to_id = reply_to_id;
+    this.loaded = false;
+    this.url = null;
+
+    return this;
+}
+
+$.extend(RB.UploadedFileCommentReply.prototype, {
+    ready: function(on_ready) {
+        if (this.loaded) {
+            on_ready();
+        } else {
+            this._load(on_ready);
+        }
+    },
+
+    /*
+     * Sets the current text in the comment block.
+     *
+     * @param {string} text  The new text to set.
+     */
+    setText: function(text) {
+        this.text = text;
+        $.event.trigger("textChanged", null, this);
+    },
+
+    /*
+     * Saves the comment on the server.
+     */
+    save: function(options) {
+        var self = this;
+        options = options || {};
+
+        self.ready(function() {
+            self.reply.ensureCreated(function() {
+                var type;
+                var url;
+                var data = {
+                    text: self.text
+                };
+
+                if (self.loaded) {
+                    type = "PUT";
+                    url = self.url;
+                } else {
+                    data.reply_to_id = self.reply_to_id;
+                    url = self.reply.links.file_comments.href;
+                }
+
+                rbApiCall({
+                    type: type,
+                    url: url,
+                    data: data,
+                    success: function(rsp) {
+                        self._loadDataFromResponse(rsp);
+
+                        $.event.trigger("saved", null, self);
+
+                        if ($.isFunction(options.success)) {
+                            options.success();
+                        }
+                    }
+                });
+            });
+        });
+    },
+
+    /*
+     * Deletes the comment from the server.
+     */
+    deleteComment: function() {
+        var self = this;
+
+        self.ready(function() {
+            if (self.loaded) {
+                rbApiCall({
+                    type: "DELETE",
+                    url: self.url,
+                    success: function() {
+                        $.event.trigger("deleted", null, self);
+                        self._deleteAndDestruct();
+                    }
+                });
+            } else {
+                self._deleteAndDestruct();
+            }
+        });
+    },
+
+    deleteIfEmpty: function() {
+        if (this.text != "") {
+            return;
+        }
+
+        this.deleteComment();
+    },
+
+    _deleteAndDestruct: function() {
+        $.event.trigger("destroyed", null, this);
+    },
+
+    _load: function(on_done) {
+        var self = this;
+
+        if (!self.id) {
+            on_done();
+            return;
+        }
+
+        self.reply.ready(function() {
+            if (!self.reply.loaded) {
+                on_done();
+                return;
+            }
+
+            rbApiCall({
+                type: "GET",
+                url: self.reply.links.file_comments.href + self.id + "/",
+                success: function(rsp, status) {
+                    if (status != 404) {
+                        self._loadDataFromResponse(rsp);
+                    }
+
+                    on_done();
+                },
+            });
+        });
+    },
+
+    _loadDataFromResponse: function(rsp) {
+        this.id = rsp.file_comment.id;
+        this.text = rsp.file_comment.text;
+        this.links = rsp.file_comment.links;
+        this.url = rsp.file_comment.links.self.href;
+        this.loaded = true;
+    }
+});
 
 RB.Screenshot = function(review_request, id) {
     this.review_request = review_request;
@@ -1107,7 +1509,6 @@ $.extend(RB.Screenshot.prototype, {
         });
     }
 });
-
 
 RB.ScreenshotComment = function(review, id, screenshot_id, x, y, width,
                                 height) {

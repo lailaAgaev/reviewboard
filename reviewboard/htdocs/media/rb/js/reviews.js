@@ -1017,7 +1017,8 @@ $.reviewForm = function(review) {
 /*
  * Adds inline editing capabilities to a comment in the review form.
  *
- * @param {object} comment  A RB.DiffComment or RB.ScreenshotComment instance
+ * @param {object} comment  A RB.DiffComment, RB.UploadedFileComment 
+ *                          or RB.ScreenshotComment instance
  *                          to store the text on and save.
  */
 $.fn.reviewFormCommentEditor = function(comment) {
@@ -1069,6 +1070,23 @@ $.fn.reviewRequestFieldEditor = function() {
  * Adds inline editing capabilities to a field for a screenshot.
  */
 $.fn.screenshotFieldEditor = function() {
+    return this.each(function() {
+        $(this)
+            .inlineEditor({
+                cls: this.id + "-editor",
+                editIconPath: MEDIA_URL + "rb/images/edit.png?" + MEDIA_SERIAL,
+                showButtons: false
+            })
+            .bind("complete", function(e, value) {
+                setDraftField(this.id, value);
+            });
+    });
+}
+
+/*
+ * Adds inline editing capabilities to a field for a screenshot.
+ */
+$.fn.uploadedFileFieldEditor = function() {
     return this.each(function() {
         $(this)
             .inlineEditor({
@@ -1136,6 +1154,68 @@ $.screenshotThumbnail = function(screenshot) {
                 )
             );
 
+        container.find(".editable").uploadedFileFieldEditor()
+    } else {
+        body.addClass("loading");
+
+        captionArea.append("&nbsp;");
+    }
+
+    var fileList = $("#file-list");
+    $(fileList.parent()[0]).show();
+    return container.insertBefore(fileList.find("br"));
+};
+
+/*
+ * Adds a file to the uploaded files list.
+ *
+ * If an UploadedFile object is given, then this will display the
+ * file data. Otherwise, this will display a placeholder.
+ *
+ * @param {object} uploadedFile  The optional file to display.
+ *
+ * @return {jQuery} The root file-list div.
+ */
+$.fileDisplay = function(uploadedFile) {
+    var container = $('<div/>')
+        .addClass("file-container");
+
+    var body = $('<div class="file"/>')
+        .addClass("file")
+        .appendTo(container);
+
+    var captionArea = $('<div/>')
+        .addClass("file-caption")
+        .appendTo(container);
+
+    if (uploadedFile) {
+        body.append($("<a/>")
+            .attr({
+                href: uploadedFile.file_url,
+                alt: uploadedFile.title
+            })
+        );
+
+        captionArea
+            .append($("<a/>")
+                .addClass("editable")
+                .addClass("file-editable")
+                .attr({
+                    href: uploadedFile.file_url,
+                    id: "file_" + uploadedFile.id + "_caption"
+                })
+            )
+            .append($("<a/>")
+                .attr("href", screenshot.image_url + "delete/")
+                .append($("<img/>")
+                    .attr({
+                        src: MEDIA_URL + "rb/images/delete.png?" +
+                             MEDIA_SERIAL,
+                        alt: "Delete File"
+                    })
+                )
+            );
+
         container.find(".editable").screenshotFieldEditor()
     } else {
         body.addClass("loading");
@@ -1147,7 +1227,6 @@ $.screenshotThumbnail = function(screenshot) {
     $(thumbnails.parent()[0]).show();
     return container.insertBefore(thumbnails.find("br"));
 };
-
 
 /*
  * Registers for updates to the review request. This will cause a pop-up
@@ -1447,6 +1526,26 @@ function initScreenshotDnD() {
             buttons: gDraftBannerButtons,
             success: function(rsp, screenshot) {
                 thumb.replaceWith($.screenshotThumbnail(screenshot));
+                gDraftBanner.show();
+            },
+            error: function(rsp, msg) {
+                thumb.remove();
+            }
+        });
+    }
+
+    function uploadFile(file) {
+        /* Create a temporary screenshot thumbnail. */
+        var thumb = $.fileDisplay()
+            .css("opacity", 0)
+            .fadeTo(1000, 1);
+
+        var uploadedFile = gReviewRequest.createUploadedFile();
+        uploadedFile.setFile(file);
+        uploadedFile.save({
+            buttons: gDraftBannerButtons,
+            success: function(rsp, uploadedFile) {
+                thumb.replaceWith($.fileDisplay(uploadedFile));
                 gDraftBanner.show();
             },
             error: function(rsp, msg) {
