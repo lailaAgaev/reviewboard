@@ -18,7 +18,7 @@ RB.DiffComment = function(review, id, filediff, interfilediff, beginLineNum,
 $.extend(RB.DiffComment.prototype, {
     ready: function(on_ready) {
         if (this.loaded) {
-            on_ready();
+            on_ready.apply(this, arguments);
         } else {
             this._load(on_ready);
         }
@@ -128,13 +128,13 @@ $.extend(RB.DiffComment.prototype, {
         var self = this;
 
         if (!self.id) {
-            on_done();
+            on_done.apply(this, arguments);
             return;
         }
 
         self.review.ready(function() {
             if (!self.review.loaded) {
-                on_done();
+                on_done.apply(this, arguments);
                 return;
             }
 
@@ -146,7 +146,7 @@ $.extend(RB.DiffComment.prototype, {
                         self._loadDataFromResponse(rsp);
                     }
 
-                    on_done();
+                    on_done.apply(this, arguments);
                 },
             });
         });
@@ -178,7 +178,7 @@ RB.DiffCommentReply = function(reply, id, reply_to_id) {
 $.extend(RB.DiffCommentReply.prototype, {
     ready: function(on_ready) {
         if (this.loaded) {
-            on_ready();
+            on_ready.apply(this, arguments);
         } else {
             this._load(on_ready);
         }
@@ -273,13 +273,13 @@ $.extend(RB.DiffCommentReply.prototype, {
         var self = this;
 
         if (!self.id) {
-            on_done();
+            on_done.apply(this, arguments);
             return;
         }
 
         self.reply.ready(function() {
             if (!self.reply.loaded) {
-                on_done();
+                on_done.apply(this, arguments);
                 return;
             }
 
@@ -291,7 +291,7 @@ $.extend(RB.DiffCommentReply.prototype, {
                         self._loadDataFromResponse(rsp);
                     }
 
-                    on_done();
+                    on_done.apply(this, arguments);
                 },
             });
         });
@@ -464,7 +464,7 @@ $.extend(RB.ReviewRequest.prototype, {
      */
     ready: function(on_ready) {
         if (this.loaded) {
-            on_ready();
+            on_ready.apply(this, arguments);
         } else {
             var self = this;
 
@@ -474,7 +474,7 @@ $.extend(RB.ReviewRequest.prototype, {
                 success: function(rsp) {
                     self.loaded = true;
                     self.links = rsp.review_request.links;
-                    on_ready();
+                    on_ready.apply(this, arguments);
                 }
             });
         }
@@ -676,7 +676,7 @@ $.extend(RB.Review.prototype, {
 
     ready: function(on_done) {
         if (this.loaded) {
-            on_done();
+            on_done.apply(this, arguments);
         } else {
             this._load(on_done);
         }
@@ -687,14 +687,14 @@ $.extend(RB.Review.prototype, {
 
         self.ready(function() {
             if (self.loaded) {
-                on_done();
+                on_done.apply(this, arguments);
             } else {
                 /* The review doesn't exist. Create it. */
                 self.save({
                     success: function(rsp) {
                         self.id = rsp.review.id;
                         self.loaded = true;
-                        on_done();
+                        on_done.apply(this, arguments);
                     }
                 });
             }
@@ -785,7 +785,7 @@ $.extend(RB.Review.prototype, {
                         self._loadDataFromResponse(rsp);
                     }
 
-                    on_done();
+                    on_done.apply(this, arguments);
                 },
             });
         });
@@ -866,7 +866,7 @@ RB.ReviewReply = function(review, id) {
 $.extend(RB.ReviewReply.prototype, {
     ready: function(on_done) {
         if (this.loaded) {
-            on_done();
+            on_done.apply(this, arguments);
         } else {
             this._load(on_done);
         }
@@ -877,13 +877,13 @@ $.extend(RB.ReviewReply.prototype, {
 
         self.ready(function() {
             if (self.loaded) {
-                on_done();
+                on_done.apply(this, arguments);
             } else {
                 /* The review doesn't exist. Create it. */
                 self.save({
                     success: function(rsp) {
                         self._loadDataFromResponse(rsp);
-                        on_done();
+                        on_done.apply(this, arguments);
                     }
                 });
             }
@@ -1002,7 +1002,7 @@ $.extend(RB.ReviewReply.prototype, {
                         self._loadDataFromResponse(rsp);
                     }
 
-                    on_done();
+                    on_done.apply(this, arguments);
                 },
             });
         });
@@ -1529,7 +1529,7 @@ RB.ScreenshotComment = function(review, id, screenshot_id, x, y, width,
 $.extend(RB.ScreenshotComment.prototype, {
     ready: function(on_ready) {
         if (this.loaded) {
-            on_ready();
+            on_ready.apply(this, arguments);
         } else {
             this._load(on_ready);
         }
@@ -1627,13 +1627,13 @@ $.extend(RB.ScreenshotComment.prototype, {
         var self = this;
 
         if (!self.id) {
-            on_done();
+            on_done.apply(this, arguments);
             return;
         }
 
         self.review.ready(function() {
             if (!self.review.loaded) {
-                on_done();
+                on_done.apply(this, arguments);
                 return;
             }
 
@@ -1646,7 +1646,7 @@ $.extend(RB.ScreenshotComment.prototype, {
                         self._loadDataFromResponse(rsp);
                     }
 
-                    on_done();
+                    on_done.apply(this, arguments);
                 },
             });
         });
@@ -1680,7 +1680,7 @@ RB.ScreenshotCommentReply = function(reply, id, reply_to_id) {
 $.extend(RB.ScreenshotCommentReply.prototype, {
     ready: function(on_ready) {
         if (this.loaded) {
-            on_ready();
+            on_ready.apply(this, arguments);
         } else {
             this._load(on_ready);
         }
@@ -1775,13 +1775,13 @@ $.extend(RB.ScreenshotCommentReply.prototype, {
         var self = this;
 
         if (!self.id) {
-            on_done();
+            on_done.apply(this, arguments);
             return;
         }
 
         self.reply.ready(function() {
             if (!self.reply.loaded) {
-                on_done();
+                on_done.apply(this, arguments);
                 return;
             }
 
@@ -1793,7 +1793,7 @@ $.extend(RB.ScreenshotCommentReply.prototype, {
                         self._loadDataFromResponse(rsp);
                     }
 
-                    on_done();
+                    on_done.apply(this, arguments);
                 },
             });
         });
@@ -1850,7 +1850,7 @@ function rbApiCall(options) {
 
         var data = $.extend(true, {
             url: url,
-            data: options.data || {dummy: ""},
+            data: options.data,
             dataType: options.dataType || "json",
             error: function(xhr, textStatus, errorThrown) {
                 var rsp = null;
@@ -1916,6 +1916,9 @@ function rbApiCall(options) {
         };
 
         if (options.form) {
+            data.data = $.extend({
+                api_format: 'json'
+            }, data.data || {});
             options.form.ajaxSubmit(data);
         } else {
             $.ajax(data);
