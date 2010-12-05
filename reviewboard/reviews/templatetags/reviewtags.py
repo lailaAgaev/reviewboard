@@ -13,7 +13,7 @@ from reviewboard.accounts.models import Profile
 from reviewboard.diffviewer.models import DiffSet
 from reviewboard.filemanager.models import UploadedFile
 from reviewboard.reviews.models import Comment, Group, ReviewRequest, \
-                                       ScreenshotComment
+                                       ScreenshotComment, UploadedFileComment
 
 
 register = template.Library()

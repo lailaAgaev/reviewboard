@@ -2105,7 +2105,7 @@ class BaseUploadedFileResource(WebAPIResource):
             'type': str,
             'description': "The file's descriptive caption.",
         },
-        'path': {
+        'title': {
             'type': str,
             'description': "The path of the file, "
                            "relative to the media directory configured "
@@ -2133,13 +2133,13 @@ class BaseUploadedFileResource(WebAPIResource):
         return self.model.objects.filter(review_request=review_request_id)
 
     def serialize_title_field(self, obj):
-        return obj.file.name
+        return obj.upfile.name
 
     def serialize_url_field(self, obj):
-        return obj.file.url
+        return obj.upfile.url
 
     def serialize_file_url_field(self, obj):
-        return obj.get_file_url()
+        return obj.get_absolute_url()
 
     @webapi_login_required
     @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED,
@@ -3174,8 +3174,6 @@ class ReviewReplyScreenshotCommentResource(BaseScreenshotCommentResource):
 
 review_reply_screenshot_comment_resource = \
     ReviewReplyScreenshotCommentResource()
-
-
 
 
 class BaseFileCommentResource(WebAPIResource):
@@ -5033,4 +5031,9 @@ register_resource_for_model(
     lambda obj: obj.review.get().is_reply() and
                 review_reply_screenshot_comment_resource or
                 review_screenshot_comment_resource)
+register_resource_for_model(
+    UploadedFileComment,
+    lambda obj: obj.review.get().is_reply() and
+                review_reply_file_comment_resource or
+                review_file_comment_resource)
 register_resource_for_model(User, user_resource)

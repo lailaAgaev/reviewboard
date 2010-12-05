@@ -65,10 +65,13 @@
       $("<div/>").formDlg({
         title: "{% trans "Review File" %}",
         confirmLabel: "{% trans "Save" %}",
-        dataStoreObject: gReviewRequest.createFileComment(this.id),
+        dataStoreObject: gReviewRequest.createReview().createFileComment(this.id),
         upload: false,
         fields: {% form_dialog_fields comment_file_form %},
         success: function(rsp) {
+            if (!$("#file-list").length == 0) {
+                $.fileDisplay(rsp.file);
+            }
             gDraftBanner.show();
         }
       });
