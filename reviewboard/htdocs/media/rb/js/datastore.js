@@ -783,14 +783,14 @@ $.extend(RB.Review.prototype, {
             rbApiCall({
                 type: "GET",
                 url: self.review_request.links.reviews.href +
-                     (self.id ? self.id : "draft") + "/",
+                     (self.id || "draft") + "/",
                 success: function(rsp, status) {
                     if (status != 404) {
                         self._loadDataFromResponse(rsp);
                     }
 
                     on_done.apply(this, arguments);
-                },
+                }
             });
         });
     },
@@ -2079,10 +2079,11 @@ function rbApiCall(options) {
             $.funcQueue("rbapicall").next();
         };
 
+        data.data = $.extend({
+            api_format: 'json'
+        }, data.data || {});
+
         if (options.form) {
-            data.data = $.extend({
-                api_format: 'json'
-            }, data.data || {});
             options.form.ajaxSubmit(data);
         } else {
             $.ajax(data);
