@@ -268,7 +268,7 @@ class DiffCommentTests(SeleniumUnitTest):
         self.wait_for_ajax_finish()
         time.sleep(0.25) # It will be animating, so wait.
 
-        self.assertEqual(r.reviews.count(), 0)
+        self.assertEqual(r.reviews.count(), 1)
 
     def open_comment_box(self, file_id, first_line, last_line):
         first_line_locator = self.build_line_locator(file_id, first_line)
@@ -968,7 +968,7 @@ class ScreenshotTests(SeleniumUnitTest):
         self.selenium.open(r.get_absolute_url())
         self.selenium.click('css=.screenshot-caption '
                             'img[alt="Delete Screenshot"]')
-        self.selenium.wait_for_page_to_load("6000")
+        self.wait_for_ajax_finish()
 
         draft = r.get_draft(self.user)
         self.assertNotEqual(draft, None)
