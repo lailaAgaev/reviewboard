@@ -88,15 +88,13 @@
    <br clear="both" />
   </div>
  </div>
- </div>
 <div class="content clearfix"{% ifequal review_request_details.files.count 0 %} style="display: none;"{% endifequal %}>
-<label for="files">{% trans "Uploaded Files" %}:</label>
+<label for="file-list">{% trans "Uploaded Files" %}:</label>
  <div id="file-list">
-  <span id="files">
   {% for upfile in review_request_details.files.all %}
    <div class="file-container">
    <dd>
-    <label for="file_{{upfile.id}}_caption">{{upfile.get_title}}
+    <label for="uploaded_file_{{upfile.id}}_caption">{{upfile.get_title}}
      <a href="#" id="{{upfile.id}}" class="file-review" >{% trans "Review File" %}</a>
      <a href="{{upfile.get_path}}">{% trans "Download File" %}</a>
      {% ifuserorperm review_request.submitter "reviews.delete_file" %}
@@ -105,13 +103,13 @@
       </a>
      {% endifuserorperm %}
     </label>
-    <pre id="file_{{upfile.id}}_caption" class="editable file-editable">
+    <pre id="uploaded_file_{{upfile.id}}_caption" class="editable file-editable">
      {% if draft %}{{upfile.draft_caption}}{% else %}{{upfile.caption}}{% endif %}
     </pre>
    </dd>
    </div>
    {% endfor %}
-  </span>
   <br clear="both" />
  </div>
+</div>
 </div>

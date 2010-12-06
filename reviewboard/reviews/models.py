@@ -1341,7 +1341,7 @@ class UploadedFileComment(models.Model):
         comment and returns the HTML markup embedding it.
         """
         return '<a href="%s" alt="%s" />' % \
-            (self.upFile.upfile, escape(self.text))
+            (self.upfile.upfile, escape(self.text))
 
     def get_review_url(self):
         return "%s#scomment%d" % \

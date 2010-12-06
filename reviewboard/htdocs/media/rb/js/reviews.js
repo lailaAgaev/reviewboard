@@ -408,6 +408,10 @@ $.fn.commentSection = function(review_id, context_id, context_type) {
                         obj = new RB.ScreenshotCommentReply(review_reply, null,
                                                             context_id);
                         obj.setText(value);
+                    } else if (context_type == "file_comment") {
+                        obj = new RB.UploadedFileCommentReply(review_reply, null,
+                                                            context_id);
+                        obj.setText(value);
                     } else {
                         /* Shouldn't be reached. */
                         return;
@@ -1084,24 +1088,6 @@ $.fn.screenshotFieldEditor = function() {
 }
 
 /*
- * Adds inline editing capabilities to a field for a screenshot.
- */
-$.fn.uploadedFileFieldEditor = function() {
-    return this.each(function() {
-        $(this)
-            .inlineEditor({
-                cls: this.id + "-editor",
-                editIconPath: MEDIA_URL + "rb/images/edit.png?" + MEDIA_SERIAL,
-                showButtons: false
-            })
-            .bind("complete", function(e, value) {
-                setDraftField(this.id, value);
-            });
-    });
-}
-
-
-/*
  * Adds a thumbnail to the thumbnail list.
  *
  * If a screenshot object is given, then this will display actual
@@ -1154,16 +1140,16 @@ $.screenshotThumbnail = function(screenshot) {
                 )
             );
 
-        container.find(".editable").uploadedFileFieldEditor()
+        container.find(".editable").screenshotFieldEditor()
     } else {
         body.addClass("loading");
 
         captionArea.append("&nbsp;");
     }
 
-    var fileList = $("#file-list");
-    $(fileList.parent()[0]).show();
-    return container.insertBefore(fileList.find("br"));
+    var thumbnails = $("#screenshot-thumbnails");
+    $(thumbnails.parent()[0]).show();
+    return container.insertBefore(thumbnails.find("br"));
 };
 
 /*
@@ -1177,36 +1163,35 @@ $.screenshotThumbnail = function(screenshot) {
  * @return {jQuery} The root file-list div.
  */
 $.fileDisplay = function(uploadedFile) {
-    var container = $('<div/>')
+    var container = $("<div/>")
         .addClass("file-container");
 
-    var body = $('<div class="file"/>')
-        .addClass("file")
-        .appendTo(container);
-
-    var captionArea = $('<div/>')
-        .addClass("file-caption")
+    var body = $("<dd/>")
         .appendTo(container);
 
     if (uploadedFile) {
-        body.append($("<a/>")
+        
+        var captionArea = $("<label>"+uploadedFile.title+"</label>")
             .attr({
-                href: uploadedFile.file_url,
-                alt: uploadedFile.title
-            })
-        );
+                "for": "uploaded_file_"+uploadedFile.id+"_caption"
+            });
 
+        body.append(captionArea);
         captionArea
-            .append($("<a/>")
-                .addClass("editable")
-                .addClass("file-editable")
+            .append($("<a>Review File</a>")
+                .addClass("file-review")
                 .attr({
-                    href: uploadedFile.file_url,
-                    id: "file_" + uploadedFile.id + "_caption"
+                    href: '#',
+                    id: uploadedFile.id
+                })
+            )
+            .append($("<a>Download File</a>")
+                .attr({
+                    href: uploadedFile.url,
                 })
             )
             .append($("<a/>")
-                .attr("href", screenshot.image_url + "delete/")
+                .attr("href", uploadedFile.file_url + "delete/")
                 .append($("<img/>")
                     .attr({
                         src: MEDIA_URL + "rb/images/delete.png?" +
@@ -1216,14 +1201,23 @@ $.fileDisplay = function(uploadedFile) {
                 )
             );
 
-        container.find(".editable").screenshotFieldEditor()
+        body.append($("<pre>")
+                .addClass("editable")
+                .addClass("file-editable")
+                .attr({
+                    id: "uploaded_file_"+uploadedFile.id+"_caption"
+                })
+                .append(uploadedFile.caption)
+        );
+
+        container.find(".editable").reviewRequestFieldEditor()
     } else {
         body.addClass("loading");
 
-        captionArea.append("&nbsp;");
+        body.append("&nbsp;");
     }
 
-    var thumbnails = $("#screenshot-thumbnails");
+    var thumbnails = $("#file-list");
     $(thumbnails.parent()[0]).show();
     return container.insertBefore(thumbnails.find("br"));
 };
@@ -1535,7 +1529,7 @@ function initScreenshotDnD() {
     }
 
     function uploadFile(file) {
-        /* Create a temporary screenshot thumbnail. */
+        /* Create a temporary file listing. */
         var thumb = $.fileDisplay()
             .css("opacity", 0)
             .fadeTo(1000, 1);

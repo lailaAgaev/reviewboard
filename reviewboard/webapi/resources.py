@@ -2113,17 +2113,14 @@ class BaseUploadedFileResource(WebAPIResource):
         },
         'url': {
             'type': str,
-            'description': "The URL of the file. If this is not "
+            'description': "The URL of the file, for downloading purposes."
                            "an absolute URL (for example, if it is just a "
                            "path), then it's relative to the Review Board "
                            "server's URL.",
         },
         'file_url': {
             'type': str,
-            'description': "The URL of the file's location. "
-                           "If this is not an absolute URL (for example, "
-                           "if it is just a path), then it's relative to "
-                           "the Review Board server's URL.",
+            'description': "The URL of the file object.",
         },
     }
 
@@ -2133,10 +2130,10 @@ class BaseUploadedFileResource(WebAPIResource):
         return self.model.objects.filter(review_request=review_request_id)
 
     def serialize_title_field(self, obj):
-        return obj.upfile.name
+        return obj.get_title()
 
     def serialize_url_field(self, obj):
-        return obj.upfile.url
+        return obj.get_path()
 
     def serialize_file_url_field(self, obj):
         return obj.get_absolute_url()
@@ -2419,6 +2416,7 @@ class ReviewRequestDraftResource(WebAPIResource):
 
     item_child_resources = [
         draft_screenshot_resource,
+        draft_uploaded_file_resource
     ]
 
     @classmethod
@@ -3858,6 +3856,7 @@ class ReviewReplyResource(BaseReviewResource):
     item_child_resources = [
         review_reply_diff_comment_resource,
         review_reply_screenshot_comment_resource,
+        review_reply_file_comment_resource,
     ]
 
     list_child_resources = [
@@ -4067,6 +4066,7 @@ class ReviewResource(BaseReviewResource):
         review_diff_comment_resource,
         review_reply_resource,
         review_screenshot_comment_resource,
+        review_file_comment_resource,
     ]
 
     list_child_resources = [

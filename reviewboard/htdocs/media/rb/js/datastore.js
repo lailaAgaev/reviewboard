@@ -1039,7 +1039,7 @@ RB.UploadedFile = function(review_request, id) {
 
 $.extend(RB.UploadedFile.prototype, {
     setFile: function(file) {
-        this.file = file;
+        this.uploaded_file = file;
     },
 
     setForm: function(form) {
@@ -1116,7 +1116,7 @@ $.extend(RB.UploadedFile.prototype, {
                 success: function(rsp) {
                     if (rsp.stat == "ok") {
                         if ($.isFunction(onSuccess)) {
-                            onSuccess(rsp, rsp.file);
+                            onSuccess(rsp, rsp.uploaded_file);
                         }
                     } else if ($.isFunction(onError)) {
                         onError(rsp, rsp.err.msg);
