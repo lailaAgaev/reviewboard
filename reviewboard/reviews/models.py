@@ -1098,7 +1098,7 @@ class ReviewRequestDraft(models.Model):
         caption_changes = {}
 
         for f in review_request.files.all():
-            if f in files and s.caption != s.draft_caption:
+            if f in files and f.caption != f.draft_caption:
                 caption_changes[f.id] = {
                     'old': (f.caption,),
                     'new': (f.draft_caption,),

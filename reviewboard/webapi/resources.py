@@ -3254,7 +3254,7 @@ class FileCommentResource(BaseFileCommentResource):
         q = q.filter(upfile=file_id)
         return q
 
-    @augment_method_from(BaseDiffCommentResource)
+    @augment_method_from(BaseFileCommentResource)
     def get_list(self, *args, **kwargs):
         """Returns the list of screenshot comments on a file.
 
@@ -3298,7 +3298,7 @@ class ReviewFileCommentResource(BaseFileCommentResource):
             },
         },
     )
-    def create(self, request, file_id, x, y, w, h, text,
+    def create(self, request, file_id, text,
                *args, **kwargs):
         """Creates a file comment on a review.
 
@@ -3387,7 +3387,7 @@ class ReviewFileCommentResource(BaseFileCommentResource):
         """
         pass
 
-    @augment_method_from(BaseScreenshotCommentResource)
+    @augment_method_from(BaseFileCommentResource)
     def get_list(self, *args, **kwargs):
         """Returns the list of file comments made on a review."""
         pass
@@ -3524,7 +3524,7 @@ class ReviewReplyFileCommentResource(BaseFileCommentResource):
         """
         pass
 
-    @augment_method_from(BaseScreenshotCommentResource)
+    @augment_method_from(BaseFileCommentResource)
     def get(self, *args, **kwargs):
         """Returns information on a reply to a file comment.
 
@@ -3533,7 +3533,7 @@ class ReviewReplyFileCommentResource(BaseFileCommentResource):
         """
         pass
 
-    @augment_method_from(BaseScreenshotCommentResource)
+    @augment_method_from(BaseFileCommentResource)
     def get_list(self, *args, **kwargs):
         """Returns the list of replies to file comments made on a
         review reply.
@@ -3542,10 +3542,6 @@ class ReviewReplyFileCommentResource(BaseFileCommentResource):
 
 review_reply_file_comment_resource = \
     ReviewReplyFileCommentResource()
-
-
-
-
 
 
 class BaseReviewResource(WebAPIResource):
