@@ -1092,7 +1092,12 @@ $.fn.screenshotThumbnail = function() {
             .bind("complete", function(e, value) {
                 screenshot.ready(function() {
                     screenshot.caption = value;
-                    screenshot.save();
+                    screenshot.save({
+                        buttons: gDraftBannerButtons,
+                        success: function(rsp) {
+                            gDraftBanner.show();
+                        }
+                    });
                 });
             });
 
@@ -1101,6 +1106,7 @@ $.fn.screenshotThumbnail = function() {
                 screenshot.ready(function() {
                     screenshot.deleteScreenshot();
                     self.empty();
+                    gDraftBanner.show();
                 });
                 return false;
             });
