@@ -232,7 +232,8 @@ def reply_list(context, review, comment, context_type, context_id):
             'timestamp': timestamp,
             'text': text,
             'reply_user': reply.user,
-            'draft': not reply.public
+            'draft': not reply.public,
+            'reply_to': comment
         })
 
     def process_body_replies(queryset, attrname, user):
@@ -302,7 +303,8 @@ def reply_section(context, review, comment, context_type, context_id):
         'comment': comment,
         'context_type': context_type,
         'context_id': context_id,
-        'user': context.get('user', None)
+        'user': context.get('user', None),
+        'reply_to': comment
     }
 
 

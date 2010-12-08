@@ -1,10 +1,10 @@
 {% load djblets_js %}
 {% load djblets_utils %}
 {% load i18n %}
-
-{% ifuserorperm review_request.submitter "reviews.can_edit_reviewrequest" %}
 <script type="text/javascript">
   $(document).ready(function() {
+
+{% ifuserorperm review_request.submitter "reviews.can_edit_reviewrequest" %}
 {%  if upload_diff_form %}
     $("#upload-diff-link").click(function() {
       $("<div/>")
@@ -51,7 +51,7 @@
         fields: {% form_dialog_fields upload_file_form %},
         success: function(rsp) {
             if (!$("#file-list").length == 0) {
-                $.fileDisplay(rsp.uploaded_file);
+                $.newFileDisplay(rsp.uploaded_file);
             }
 
             gDraftBanner.show();
@@ -60,15 +60,19 @@
 
       return false;
     });
+{% endifuserorperm %}
 
    $(".file-review").click(function() {
       $("<div/>").formDlg({
         title: "{% trans "Review File" %}",
         confirmLabel: "{% trans "Save" %}",
         dataStoreObject: gReviewRequest.createReview().createFileComment(this.id),
-        upload: false,
+        upload: true,
         fields: {% form_dialog_fields comment_file_form %},
         success: function(rsp) {
+            //rsp.file_comment.text = rsp.text;
+            //rsp.file_comment.ready();
+            //rsp.file_comment.save();
             gReviewBanner.show();
         }
       });
@@ -77,4 +81,3 @@
     });
   });
 </script>
-{% endifuserorperm %}

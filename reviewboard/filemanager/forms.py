@@ -43,11 +43,11 @@ class CommentFileForm(forms.Form):
     """
     A form that handles commenting on a file.
     """
-    review = forms.CharField(widget=forms.Textarea(attrs={'rows':'8','cols':'70'}))
+    text = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows':'8','cols':'70'}))
 
     def create(self, upfile, review_request):
 
-        comment = UploadedFileComment(text=self.cleaned_data['review'],
+        comment = UploadedFileComment(text=self.cleaned_data['text'],
                                 upfile=upfile)
 
         comment.timestamp = datetime.now()

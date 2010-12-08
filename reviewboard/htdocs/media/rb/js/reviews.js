@@ -138,6 +138,7 @@ function linkifyText(text) {
  * @param {string} value  The field value.
  */
 function setDraftField(field, value) {
+
     gReviewRequest.setDraftField({
         field: field,
         value: value,
@@ -1069,7 +1070,6 @@ $.fn.reviewRequestFieldEditor = function() {
     });
 }
 
-
 /*
  * Handles interaction and events with a screenshot thumbnail.
 
@@ -1092,17 +1092,56 @@ $.fn.screenshotThumbnail = function() {
             .bind("complete", function(e, value) {
                 screenshot.ready(function() {
                     screenshot.caption = value;
-                    screenshot.save()
+                    screenshot.save();
                 });
             });
 
         captionEl.find("a.delete")
             .click(function() {
                 screenshot.ready(function() {
-                    screenshot.deleteScreenshot()
+                    screenshot.deleteScreenshot();
                     self.empty();
                 });
+                return false;
+            });
+    });
+}
 
+/*
+ * Handles interaction and events with a file entry.
+ * @return {jQuery} The provided file containers.
+ */
+$.fn.fileHandler = function() {
+    return $(this).each(function() {
+        var self = $(this);
+
+        var file_id = self.attr("data-file-id");
+        var upfile = gReviewRequest.createUploadedFile(file_id);
+        upfile
+        var captionEl = self.find(".file-caption");
+
+        captionEl.find("pre.edit")
+            .inlineEditor({
+                cls: this.id + "-editor",
+                editIconPath: MEDIA_URL + "rb/images/edit.png?" + MEDIA_SERIAL,
+                multiline: false,
+                showButtons: true,
+            })
+            .bind("complete", function(e, value) {
+                upfile.ready(function() {
+                    upfile.caption = value;
+                    upfile.save();
+                });
+                gDraftBanner.show();
+            });
+
+        self.find("a.delete")
+            .click(function() {
+                upfile.ready(function() {
+                    upfile.deleteFile();
+                    self.empty();
+                });
+                gDraftBanner.show();
                 return false;
             });
     });
@@ -1185,7 +1224,7 @@ $.newScreenshotThumbnail = function(screenshot) {
  *
  * @return {jQuery} The root file-list div.
  */
-$.fileDisplay = function(uploadedFile) {
+$.newFileDisplay = function(uploadedFile) {
     var container = $("<div/>")
         .addClass("file-container");
 
@@ -1214,7 +1253,8 @@ $.fileDisplay = function(uploadedFile) {
                 })
             )
             .append($("<a/>")
-                .attr("href", uploadedFile.file_url + "delete/")
+                .addClass("delete")
+                .attr("href", "#")
                 .append($("<img/>")
                     .attr({
                         src: MEDIA_URL + "rb/images/delete.png?" +
@@ -1224,16 +1264,21 @@ $.fileDisplay = function(uploadedFile) {
                 )
             );
 
-        body.append($("<pre>")
+        var preContainer = $("<div/>")
+            .addClass("file-caption");
+
+        body.append(preContainer);
+
+        preContainer.append($("<pre>")
                 .addClass("editable")
-                .addClass("file-editable")
+                .addClass("file-editable edit")
                 .attr({
                     id: "uploaded_file_"+uploadedFile.id+"_caption"
                 })
                 .append(uploadedFile.caption)
         );
 
-        container.find(".editable").reviewRequestFieldEditor()
+        container.attr("data-file-id", uploadedFile.id).fileHandler();
     } else {
         body.addClass("loading");
 
@@ -1244,6 +1289,14 @@ $.fileDisplay = function(uploadedFile) {
     $(thumbnails.parent()[0]).show();
     return container.insertBefore(thumbnails.find("br"));
 };
+
+function createFileComment(file_id) {
+    var review = gReviewRequest.createReview();
+    review.ready();
+    var comment = review.createFileComment(this, null, this.id);
+    return comment;
+}
+    
 
 /*
  * Registers for updates to the review request. This will cause a pop-up
@@ -1754,6 +1807,7 @@ $(document).ready(function() {
         if (window["gEditable"]) {
             $(".editable").reviewRequestFieldEditor();
             $(".screenshot-container").screenshotThumbnail();
+            $(".file-container").fileHandler();
 
             var targetGroupsEl = $("#target_groups");
             var targetPeopleEl = $("#target_people");

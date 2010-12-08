@@ -356,7 +356,7 @@ def review_detail(request,
             latest_reply = None
 
         # Mark as expanded if there is a reply newer than last_visited
-        if latest_reply and last_visited < latest_reply:
+        if latest_reply and type(last_visited) is datetime and last_visited < latest_reply:
           state = ''
 
         entries.append({
@@ -400,7 +400,7 @@ def review_detail(request,
                         info['new'][0] = mark_safe(info['new'][0])
             elif name == "screenshot_captions":
                 change_type = 'screenshot_captions'
-            elif name == "file_captions":
+            elif name.startswith("uploaded_file"): # == "uploaded_file_captions" || name == "uploaded_file_5_caption":
                 change_type = 'file_captions'
             else:
                 # No clue what this is. Bail.

@@ -2163,8 +2163,7 @@ class BaseUploadedFileResource(WebAPIResource):
         return obj.get_absolute_url()
 
     @webapi_login_required
-    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED,
-                            INVALID_FORM_DATA)
+    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED)
     @webapi_request_fields(
         required={
             'path': {
@@ -2261,9 +2260,31 @@ class BaseUploadedFileResource(WebAPIResource):
         upfile.save()
 
         return 200, {
-            self.item_result_key: screenshot,
+            self.item_result_key: upfile,
         }
 
+    @webapi_login_required
+    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED)
+    def delete(self, request, *args, **kwargs):
+        try:
+            review_request = \
+                review_request_resource.get_object(request, *args, **kwargs)
+            upfile = uploaded_file_resource.get_object(request, *args,
+                                                        **kwargs)
+        except ObjectDoesNotExist:
+            return DOES_NOT_EXIST
+
+        try:
+            draft = review_request_draft_resource.prepare_draft(request,
+                                                                review_request)
+        except PermissionDenied:
+            return PERMISSION_DENIED
+
+        draft.files.remove(upfile)
+        draft.inactive_files.add(upfile)
+        draft.save()
+
+        return 204, {}
 
 class DraftUploadedFileResource(BaseUploadedFileResource):
     """Provides information on new uploaded files being added to a draft of
@@ -2438,7 +2459,7 @@ class ReviewRequestDraftResource(WebAPIResource):
 
     allowed_methods = ('GET', 'POST', 'PUT', 'DELETE')
 
-    item_child_resources = [
+    list_child_resources = [
         draft_screenshot_resource,
         draft_uploaded_file_resource
     ]
@@ -3237,7 +3258,7 @@ class BaseFileCommentResource(WebAPIResource):
 
     def get_queryset(self, request, review_request_id, *args, **kwargs):
         return self.model.objects.filter(
-            file__review_request=review_request_id,
+            upfile__review_request=review_request_id,
             review__isnull=False)
 
     def serialize_public_field(self, obj):
@@ -3262,7 +3283,7 @@ class BaseFileCommentResource(WebAPIResource):
 
 
 class FileCommentResource(BaseFileCommentResource):
-    """Provides information on filess comments made on a review request.
+    """Provides information on file comments made on a review request.
 
     The list of comments cannot be modified from this resource. It's meant
     purely as a way to see existing comments that were made on a diff. These
@@ -4242,8 +4263,7 @@ class UploadedFileResource(BaseUploadedFileResource):
         """
         pass
 
-    @webapi_login_required
-    @augment_method_from(WebAPIResource)
+    @augment_method_from(BaseUploadedFileResource)
     def delete(self, *args, **kwargs):
         """Deletes the screenshot.
 

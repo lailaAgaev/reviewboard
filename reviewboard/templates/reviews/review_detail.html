@@ -82,7 +82,7 @@
  <div class="body">
    <pre class="body_top reviewtext">{{entry.review.body_top|escape}}</pre>
    {% reply_section entry.review "" "body_top" "rcbt" %}
-{% if entry.review.comments.all or entry.review.screenshot_comments.all %}
+{% if entry.review.comments.all or entry.review.screenshot_comments.all or entry.review.file_comments.all %}
    <dl class="diff-comments">
 {% for comment in entry.review.screenshot_comments.all %}
     <dt>
@@ -97,6 +97,22 @@
     <dd>
      <pre>{{comment.text|escape}}</pre>
      {% reply_section entry.review comment "screenshot_comment" "rc" %}
+    </dd>
+{% endfor %}
+{% for comment in entry.review.file_comments.all %}
+    <dt>
+     <a name="fcomment{{comment.id}}"></a>
+     <div class="screenshot">
+      <span class="filename">
+       <a href="{{comment.upfile.get_path}}">{{comment.upfile.get_title|basename}}</a>
+       {% if comment.upfile.caption %}<pre>{% trans "Description:" %} {{comment.upfile.caption}}</pre>{% endif %}
+      </span>
+      </dd>
+     </div>
+    </dt>
+    <dd>
+     <pre>{{comment.text|escape}}</pre>
+     {% reply_section entry.review comment "file_comment" "rc" %}
     </dd>
 {% endfor %}
 {% for comment in entry.review.ordered_comments %}
