@@ -1296,14 +1296,6 @@ $.newFileDisplay = function(uploadedFile) {
     return container.insertBefore(thumbnails.find("br"));
 };
 
-function createFileComment(file_id) {
-    var review = gReviewRequest.createReview();
-    review.ready();
-    var comment = review.createFileComment(this, null, this.id);
-    return comment;
-}
-    
-
 /*
  * Registers for updates to the review request. This will cause a pop-up
  * bubble to be displayed when updates of the specified type are displayed.

@@ -1,3 +1,7 @@
+//State:
+var gFileComments;
+
+
 /*
  * Creates a comment block to the screenshot comments area.
  *
@@ -17,7 +21,7 @@ function fileCommentBlock(container, file_id, comments) {
     this.canDelete = false;
     this.draftComment = null;
 
-    this.el = $("a#"+this.file_id, container.parent());
+    this.el = $("a#"+this.file_id, container);
     this.tooltip = $.tooltip(this.el, {
         side: "lrbt"
     }).addClass("comments");
@@ -150,9 +154,7 @@ jQuery.extend(fileCommentBlock.prototype, {
 
         $.event.add(comment, "destroyed", function() {
             /* Discard the comment block if empty. */
-            if (self.comments.length == 0) {
-                el.fadeOut(350, function() { el.remove(); })
-            } else {
+            if (self.comments.length > 0) {
                 el.removeClass("draft");
                 self.flag.removeClass("flag-draft");
                 self.updateCount();
@@ -163,6 +165,7 @@ jQuery.extend(fileCommentBlock.prototype, {
         $.event.add(comment, "saved", function() {
             self.updateCount();
             self.updateTooltip();
+            gFileComments[comment.file_id] += 
             self.notify("Comment Saved");
             showReviewBanner();
         });
@@ -172,7 +175,6 @@ jQuery.extend(fileCommentBlock.prototype, {
         this.flag.addClass("flag-draft");
     }
 });
-
 
 /*
  * Creates a box for creating and seeing all comments on a file.
@@ -186,16 +188,14 @@ jQuery.fn.fileCommentBox = function(regions) {
 
     /* State */
     var activeCommentBlock = null;
+    gFileComments = regions;
 
     /* Page elements */
     var file_list = this;
-    var selectionArea =
-        $('<div id="selection-container"/>')
-        .prependTo(file_list);
 
     var activeSelection =
         $('<div id="selection-interactive"/>')
-        .prependTo(selectionArea)
+        .prependTo(file_list)
         .hide();
 
     var commentDetail = $("#comment-detail")
@@ -208,11 +208,11 @@ jQuery.fn.fileCommentBox = function(regions) {
      * Register events on the selection area for handling new comment
      * creation.
      */
-    $([file_list[0], selectionArea[0]])
+    $([file_list[0]])
         .mousedown(function(evt) {
             if (evt.which == 1 && !activeCommentBlock &&
                 !$(evt.target).hasClass("selection-flag")) {
-                var offset = selectionArea.offset();
+                var offset = file_list.offset();
                 activeSelection.beginX =
                     evt.pageX - Math.floor(offset.left) - 1;
                 activeSelection.beginY =
@@ -241,19 +241,14 @@ jQuery.fn.fileCommentBox = function(regions) {
 
                 activeSelection.hide();
 
-                /*
-                 * If we don't pass an arbitrary minimum size threshold,
-                 * don't do anything.  This helps avoid making people mad
-                 * if they accidentally click on the image.
-                 */
-                if (!activeCommentBlock) {
+                if (activeCommentBlock) {
                         showCommentDlg(addCommentBlock(file_id));
                 }
             }
         })
         .mousemove(function(evt) {
             if (!activeCommentBlock && activeSelection.is(":visible")) {
-                var offset = selectionArea.offset();
+                var offset = file_list.offset();
                 var x = evt.pageX - Math.floor(offset.left) - 1;
                 var y = evt.pageY - Math.floor(offset.top) - 1;
 
@@ -282,50 +277,6 @@ jQuery.fn.fileCommentBox = function(regions) {
         })
         .proxyTouchEvents();
 
-    /*
-     * Register a hover event to hide the comments when the mouse is not
-     * over the comment area.
-     */
-    this.hover(
-        function() {
-            selectionArea.show();
-        },
-        function() {
-            if (activeSelection.is(":hidden") &&
-                commentDetail.is(":hidden")) {
-                selectionArea.hide();
-            }
-        }
-    );
-
-    /*
-     * Register a resize event to reposition the selection area on page
-     * resize, so that comments are in the right locations.
-     */
-    $(window)
-        .resize(function() {
-            var offset = file_list.position();
-
-            /*
-             * The margin: 0 auto means that position.left() will return
-             * the left-most part of the entire block, rather than the actual
-             * position of the image on Chrome. Every other browser returns 0
-             * for this margin, as we'd expect. So, just play it safe and
-             * offset by the margin-left. (Bug #1050)
-             */
-            offset.left += file_list.getExtents("m", "l");
-
-            if ($.browser.msie && $.browser.version == 6) {
-                offset.left -= self.getExtents("mp", "l");
-            }
-
-            selectionArea
-                .width(file_list.width())
-                .height(file_list.height())
-                .css("left", offset.left);
-        })
-        .triggerHandler("resize");
-
     /* Add all existing comment regions to the page. */
     for (i in regions) {
         var file_id = i;
@@ -343,7 +294,12 @@ jQuery.fn.fileCommentBox = function(regions) {
      * @return {CommentBlock} The new comment block.
      */
     function addCommentBlock(file_id, comments) {
-        var commentBlock = new fileCommentBlock(selectionArea, file_id, comments)
+
+        //get existing comments!
+        if (!comments && gFileComments){
+            comments = gFileComments[file_id];
+        }
+        var commentBlock = new fileCommentBlock(file_list[0], file_id, comments)
         commentBlock.el.click(function() {
             showCommentDlg(commentBlock);
         });

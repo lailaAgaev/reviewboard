@@ -1255,14 +1255,14 @@ $.extend(RB.FileComment.prototype, {
                 var type;
                 var url;
                 var data = {
-                    text: self.text,
-                    file_id: self.file_id
+                    text: self.text
                 };
 
                 if (self.loaded) {
                     type = "PUT";
                     url = self.url;
                 } else {
+                    data.file_id = self.file_id;
                     url = self.review.links.file_comments.href;
                 }
 
@@ -1297,7 +1297,7 @@ $.extend(RB.FileComment.prototype, {
                     }
                 });
             } else {
-                this._deleteAndDestruct();
+                self._deleteAndDestruct();
             }
         });
     },
@@ -1308,10 +1308,6 @@ $.extend(RB.FileComment.prototype, {
         }
 
         this.deleteComment();
-    },
-
-    _deleteAndDestruct: function() {
-        $.event.trigger("destroyed", null, this);
     },
 
     _load: function(on_done) {
@@ -1341,6 +1337,10 @@ $.extend(RB.FileComment.prototype, {
                 },
             });
         });
+    },
+
+    _deleteAndDestruct: function() {
+        $.event.trigger("destroyed", null, this);
     },
 
     _loadDataFromResponse: function(rsp) {
