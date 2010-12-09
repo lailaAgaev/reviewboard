@@ -61,23 +61,5 @@
       return false;
     });
 {% endifuserorperm %}
-
-   $(".file-review").click(function() {
-      $("<div/>").formDlg({
-        title: "{% trans "Review File" %}",
-        confirmLabel: "{% trans "Save" %}",
-        dataStoreObject: gReviewRequest.createReview().createFileComment(this.id),
-        upload: true,
-        fields: {% form_dialog_fields comment_file_form %},
-        success: function(rsp) {
-            //rsp.file_comment.text = rsp.text;
-            //rsp.file_comment.ready();
-            //rsp.file_comment.save();
-            gReviewBanner.show();
-        }
-      });
-
-      return false;
-    });
   });
 </script>

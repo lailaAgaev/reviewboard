@@ -205,6 +205,48 @@ def screenshotcommentcounts(context, screenshot):
 
 @register.tag
 @basictag(takes_context=True)
+def filecommentcounts(context, files):
+    """
+    Returns a JSON array of current comments for a screenshot.
+
+    Each entry in the array has a dictionary containing the following keys:
+
+      =========== ==================================================
+      Key         Description
+      =========== ==================================================
+      text        The text of the comment
+      localdraft  True if this is the current user's draft comment
+      =========== ==================================================
+    """
+    fileComments = {}
+    user = context.get('user', None)
+    for upFile in files:
+        default = '%s' % (upFile.id)
+        upfileDefault = fileComments.setdefault(default, [])
+        for comment in upFile.comments.all():
+            review = get_object_or_none(comment.review)
+
+            if review and (review.public or review.user == user):
+                position = '%s' % (comment.id)
+
+                upfileDefault.append({
+                    'file_id': upFile.id,
+                    'id': comment.id,
+                    'text': comment.text,
+                    'user': {
+                        'username': review.user.username,
+                        'name': review.user.get_full_name() or review.user.username,
+                    },
+                    'url': comment.get_review_url(),
+                    'localdraft' : review.user == user and \
+                                   not review.public,
+                })
+
+    return simplejson.dumps(fileComments)
+
+
+@register.tag
+@basictag(takes_context=True)
 def reply_list(context, review, comment, context_type, context_id):
     """
     Renders a list of comments of a specified type.

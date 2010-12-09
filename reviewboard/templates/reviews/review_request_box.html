@@ -4,6 +4,8 @@
 
 {% include "reviews/review_request_dlgs.html" %}
 
+<script language="javascript" src="{{MEDIA_URL}}rb/js/filemanager.js?{{MEDIA_SERIAL}}"></script>
+
  <div class="header">
   {% star review_request %}
   <div id="summary_wrapper"><label>{% trans "Summary" %}: </label><h1 id="summary" class="editable">{{review_request_details.summary|escape}}</h1></div>
@@ -92,11 +94,10 @@
 <label for="file-list">{% trans "Uploaded Files" %}:</label>
  <div id="file-list">
   {% for upfile in review_request_details.files.all %}
-   <div class="file-container" data-file-id="{{upfile.id}}">
-   <dd>
+   <div id="{{upfile.id}}" class="file-container" data-file-id="{{upfile.id}}">
     <label for="file_caption">{{upfile.get_title}}
-     <a href="#" id="{{upfile.id}}" class="file-review" >{% trans "Review File" %}</a>
-     <a href="{{upfile.get_path}}">{% trans "Download File" %}</a>
+     <a href="#" id="{{upfile.id}}" class="file-review" >{% trans "Add comment" %}</a>
+     <a target="new" href="{{upfile.get_path}}?{{MEDIA_SERIAL}}">{% trans "Download file" %}</a>
      {% ifuserorperm review_request.submitter "reviews.delete_file" %}
       <a href="#" class="delete">
        <img src="{{MEDIA_URL}}rb/images/delete.png?{{MEDIA_SERIAL}}" alt="{% trans "Delete File" %}" />
@@ -108,9 +109,15 @@
      {% if draft %}{{upfile.draft_caption}}{% else %}{{upfile.caption}}{% endif %}
     </pre>
     </div>
-   </dd>
    </div>
    {% endfor %}
   <br clear="both" />
  </div>
 </div>
+
+<script language="javascript">
+$(document).ready(function() {
+     $("#file-list").fileCommentBox({% filecommentcounts review_request_details.files.all %});
+});
+</script>
+{% include "reviews/comments_dlg.html" %}

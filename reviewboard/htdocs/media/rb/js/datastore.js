@@ -1240,17 +1240,6 @@ $.extend(RB.FileComment.prototype, {
         $.event.trigger("textChanged", null, this);
     },
 
-    setForm: function(form) {
-        this.form = form;
-    },
-
-    _saveForm: function(options) {
-        this._saveApiCall(options.success, options.error, {
-            buttons: options.buttons,
-            form: this.form
-        });
-    },
-
     /*
      * Saves the comment on the server.
      */
@@ -1258,44 +1247,37 @@ $.extend(RB.FileComment.prototype, {
         var self = this;
 
         options = $.extend({
-            success: function() {},
+            success: function() {}
         }, options);
-        
-        if ( this.id ) {
-           self.ready(function() {
-               self.review.ensureCreated(function() {
-                   var type;
-                   var url; 
-                   var data = {
-                       text: self.text,
-                   };
 
-                   if (self.loaded) {
-                      type = "PUT";
-                      url = self.url;
-                   } else {
-                      data.file_id = self.id;
-                      url = self.review.links.file_comments.href;
-                   }
+        self.ready(function() {
+            self.review.ensureCreated(function() {
+                var type;
+                var url;
+                var data = {
+                    text: self.text,
+                    file_id: self.file_id
+                };
 
-                   rbApiCall({
-                      type: type,
-                      url: url,
-                      data: data,
-                      success: function(rsp) {
-                          self._loadDataFromResponse(rsp);
-                          $.event.trigger("saved", null, self);
-                          options.success(rsp);
-                      }
-                   });
-               });
-           });
-        } else if ( this.form ) {
-           this._saveForm(options);
-        } else {
-           options.error("No data has been set for this file. " +
-                         "This is a script error. Please report it.");
-        };
+                if (self.loaded) {
+                    type = "PUT";
+                    url = self.url;
+                } else {
+                    url = self.review.links.file_comments.href;
+                }
+
+                rbApiCall({
+                    type: type,
+                    url: url,
+                    data: data,
+                    success: function(rsp) {
+                        self._loadDataFromResponse(rsp);
+                        $.event.trigger("saved", null, self);
+                        options.success();
+                    }
+                });
+            });
+        });
     },
 
     /*
@@ -1358,25 +1340,6 @@ $.extend(RB.FileComment.prototype, {
                     on_done.apply(this, arguments);
                 },
             });
-        });
-    },
-
-    _saveApiCall: function(onSuccess, onError, options) {
-        var self = this;
-
-        self.review.ready(function() {
-            rbApiCall($.extend(options, {
-                url: self.review.links.file_comments.href,
-                success: function(rsp) {
-                    if (rsp.stat == "ok") {
-                        if ($.isFunction(onSuccess)) {
-                            onSuccess(rsp, rsp.file_comment);
-                        }
-                    } else if ($.isFunction(onError)) {
-                        onError(rsp, rsp.err.msg);
-                    }
-                }
-            }));
         });
     },
 

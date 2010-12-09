@@ -3302,7 +3302,7 @@ class FileCommentResource(BaseFileCommentResource):
     """Provides information on file comments made on a review request.
 
     The list of comments cannot be modified from this resource. It's meant
-    purely as a way to see existing comments that were made on a diff. These
+    purely as a way to see existing comments that were made on a file. These
     comments will span all public reviews.
     """
     model_parent_key = 'uploaded_file'
