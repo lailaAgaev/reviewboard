@@ -38,24 +38,3 @@ class UploadFileForm(forms.Form):
         draft.save()
 
         return upFile
-
-class CommentFileForm(forms.Form):
-    """
-    A form that handles commenting on a file.
-    """
-    text = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows':'8','cols':'70'}))
-
-    def create(self, upfile, review_request):
-
-        comment = UploadedFileComment(text=self.cleaned_data['text'],
-                                upfile=upfile)
-
-        comment.timestamp = datetime.now()
-        comment.save(save=True)
-        review_request.files.add(upFile)
-
-        draft = ReviewRequestDraft.create(review_request)
-        draft.file_comments.add(comment)
-        draft.save()
-
-        return comment

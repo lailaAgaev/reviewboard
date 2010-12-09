@@ -784,6 +784,18 @@
   text-align: center;
 }
 
+.file-review {
+  margin-left: 3px;
+  margin-right: 0px;
+  padding: 0.5em;
+}
+
+.file-download {
+  margin-left: 3px;
+  margin-right: 2px;
+  padding: 0.5em;
+}
+
 /****************************************************************************
  * Comment detail dialog
  ****************************************************************************/

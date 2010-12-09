@@ -963,6 +963,8 @@ class ReviewRequestDraft(models.Model):
            *  'target_people'
            *  'screenshots'
            *  'screenshot_captions'
+           *  'files'
+           *  'file_captions'
            *  'diff'
 
         Each field in 'fields_changed' represents a changed field. This will
@@ -1098,7 +1100,7 @@ class ReviewRequestDraft(models.Model):
         caption_changes = {}
 
         for f in review_request.files.all():
-            if f in files and f.caption != f.draft_caption:
+            if f in files and f.draft_caption and f.caption != f.draft_caption:
                 caption_changes[f.id] = {
                     'old': (f.caption,),
                     'new': (f.draft_caption,),

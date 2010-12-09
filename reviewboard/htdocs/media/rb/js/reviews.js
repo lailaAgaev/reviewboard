@@ -1123,14 +1123,13 @@ $.fn.fileHandler = function() {
 
         var file_id = self.attr("data-file-id");
         var upfile = gReviewRequest.createUploadedFile(file_id);
-        upfile
         var captionEl = self.find(".file-caption");
 
-        captionEl.find("pre.edit")
+        captionEl.find("pre.edit-"+file_id)
             .inlineEditor({
                 cls: this.id + "-editor",
                 editIconPath: MEDIA_URL + "rb/images/edit.png?" + MEDIA_SERIAL,
-                multiline: false,
+                multiline: true,
                 showButtons: true,
             })
             .bind("complete", function(e, value) {
@@ -1234,27 +1233,26 @@ $.newFileDisplay = function(uploadedFile) {
     var container = $("<div/>")
         .addClass("file-container");
 
-    var body = $("<dd/>")
-        .appendTo(container);
-
     if (uploadedFile) {
         
         var captionArea = $("<label>"+uploadedFile.title+"</label>")
             .attr({
-                "for": "uploaded_file_"+uploadedFile.id+"_caption"
+                "for": "file_caption"
             });
 
-        body.append(captionArea);
+        container.append(captionArea);
         captionArea
-            .append($("<a>Review File</a>")
+            .append($("<a>Add comment</a>")
                 .addClass("file-review")
                 .attr({
                     href: '#',
                     id: uploadedFile.id
                 })
             )
-            .append($("<a>Download File</a>")
+            .append($("<a>Download file</a>")
+                .addClass("file-download")
                 .attr({
+                    target: "new",
                     href: uploadedFile.url,
                 })
             )
@@ -1273,13 +1271,12 @@ $.newFileDisplay = function(uploadedFile) {
         var preContainer = $("<div/>")
             .addClass("file-caption");
 
-        body.append(preContainer);
+        container.append(preContainer);
 
         preContainer.append($("<pre>")
-                .addClass("editable")
-                .addClass("file-editable edit")
+                .addClass("edit")
                 .attr({
-                    id: "uploaded_file_"+uploadedFile.id+"_caption"
+                    id: "file_caption"
                 })
                 .append(uploadedFile.caption)
         );

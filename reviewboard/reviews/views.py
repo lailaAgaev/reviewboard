@@ -36,7 +36,7 @@ from reviewboard.diffviewer.diffutils import get_file_chunks_in_range
 from reviewboard.diffviewer.models import DiffSet
 from reviewboard.diffviewer.views import view_diff, view_diff_fragment, \
                                          exception_traceback_string
-from reviewboard.filemanager.forms import UploadFileForm, CommentFileForm
+from reviewboard.filemanager.forms import UploadFileForm
 from reviewboard.reviews.datagrids import DashboardDataGrid, \
                                           GroupDataGrid, \
                                           ReviewRequestDataGrid, \
@@ -114,7 +114,6 @@ def _make_review_request_context(review_request, extra_context):
         'upload_diff_form': upload_diff_form,
         'upload_screenshot_form': UploadScreenshotForm(),
         'upload_file_form': UploadFileForm(),
-        'comment_file_form': CommentFileForm(),
         'scmtool': scmtool,
     }, **extra_context)
 
@@ -356,7 +355,7 @@ def review_detail(request,
             latest_reply = None
 
         # Mark as expanded if there is a reply newer than last_visited
-        if latest_reply and type(last_visited) is datetime and last_visited < latest_reply:
+        if latest_reply  and last_visited < latest_reply:
           state = ''
 
         entries.append({
@@ -400,11 +399,13 @@ def review_detail(request,
                         info['new'][0] = mark_safe(info['new'][0])
             elif name == "screenshot_captions":
                 change_type = 'screenshot_captions'
-            elif name.startswith("uploaded_file"): # == "uploaded_file_captions" || name == "uploaded_file_5_caption":
+            elif name == "file_captions":
                 change_type = 'file_captions'
+            elif name == "files":
+                change_type = 'files'
             else:
-                # No clue what this is. Bail.
-                continue
+                change_type = 'files'
+                # no clue what this is. Bail.
 
             fields_changed.append({
                 'title': fields_changed_name_map.get(name, name),

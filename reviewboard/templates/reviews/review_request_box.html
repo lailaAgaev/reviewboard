@@ -80,7 +80,7 @@
    <div class="screenshot-container" data-screenshot-id="{{image.id}}">
     <div class="screenshot" onclick="javascript:window.location='{{image.get_absolute_url}}'; return false;"><a href="{{image.get_absolute_url}}">{{image.thumb}}</a></div>
     <div class="screenshot-caption">
-     <a href="{{image.get_absolute_url}}" class="edit">{% if draft %}{{image.draft_caption|default:image.caption}}{% else %}{{image.caption}}{% endif %}</a>
+     <a id="screenshot-caption-{{screenshot.id}}" href="{{image.get_absolute_url}}" class="edit">{% if draft %}{{image.draft_caption|default:image.caption}}{% else %}{{image.caption}}{% endif %}</a>
      {% ifuserorperm review_request.submitter "reviews.delete_screenshot" %}
       <a href="#" class="delete"><img src="{{MEDIA_URL}}rb/images/delete.png?{{MEDIA_SERIAL}}" alt="{% trans "Delete Screenshot" %}" /></a>
      {% endifuserorperm %}
@@ -94,10 +94,10 @@
 <label for="file-list">{% trans "Uploaded Files" %}:</label>
  <div id="file-list">
   {% for upfile in review_request_details.files.all %}
-   <div id="{{upfile.id}}" class="file-container" data-file-id="{{upfile.id}}">
-    <label for="file_caption">{{upfile.get_title}}
-     <a href="#" id="{{upfile.id}}" class="file-review" >{% trans "Add comment" %}</a>
-     <a target="new" href="{{upfile.get_path}}?{{MEDIA_SERIAL}}">{% trans "Download file" %}</a>
+   <div class="file-container" data-file-id="{{upfile.id}}">
+    <label for="file_caption-{{upfile.id}}">{{upfile.get_title}}
+     <a href="#" id="{{upfile.id}}" class="file-review">{% trans "Add comment" %}</a>
+     <a target="new" href="{{upfile.get_path}}?{{MEDIA_SERIAL}}" class="file-download">{% trans "Download file" %}</a>
      {% ifuserorperm review_request.submitter "reviews.delete_file" %}
       <a href="#" class="delete">
        <img src="{{MEDIA_URL}}rb/images/delete.png?{{MEDIA_SERIAL}}" alt="{% trans "Delete File" %}" />
@@ -105,9 +105,7 @@
      {% endifuserorperm %}
     </label>
     <div class="file-caption">
-    <pre id="file_caption" class="edit">
-     {% if draft %}{{upfile.draft_caption}}{% else %}{{upfile.caption}}{% endif %}
-    </pre>
+    <pre id="file_caption-{{upfile.id}}" class="edit-{{upfile.id}}">{% if draft %}{{upfile.draft_caption}}{% else %}{{upfile.caption}}{% endif %}</pre>
     </div>
    </div>
    {% endfor %}

@@ -25,7 +25,7 @@ function fileCommentBlock(container, file_id, comments) {
     this.tooltip = $.tooltip(this.el, {
         side: "lrbt"
     }).addClass("comments");
-    this.flag = $('<div class="selection-flag"/>').appendTo(this.el);
+    this.flag = $('<b class="selection-flag"/>').appendTo(this.el);
 
     /*
      * Find out if there's any draft comments, and filter them out of the
@@ -88,7 +88,7 @@ jQuery.extend(fileCommentBlock.prototype, {
         }
 
         this.count = count;
-        this.flag.html(count);
+        this.flag.html(' [' + count + ']');
     },
 
     /*
