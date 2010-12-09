@@ -1344,7 +1344,7 @@ class UploadedFileComment(models.Model):
             (self.upfile.upfile, escape(self.text))
 
     def get_review_url(self):
-        return "%s#scomment%d" % \
+        return "%s#fcomment%d" % \
             (self.review.get().review_request.get_absolute_url(), self.id)
 
     def save(self, **kwargs):
