@@ -36,8 +36,8 @@ from reviewboard import get_version_string, get_package_version, is_release
 from reviewboard.accounts.models import Profile
 from reviewboard.diffviewer.diffutils import get_diff_files
 from reviewboard.diffviewer.forms import EmptyDiffError
-from reviewboard.filemanager.models import UploadedFile
 from reviewboard.filemanager.forms import UploadFileForm
+from reviewboard.filemanager.models import UploadedFile
 from reviewboard.reviews.errors import PermissionError
 from reviewboard.reviews.forms import UploadDiffForm, UploadScreenshotForm
 from reviewboard.reviews.models import Comment, DiffSet, FileDiff, Group, \
@@ -2132,6 +2132,7 @@ class DraftScreenshotResource(BaseScreenshotResource):
 
 draft_screenshot_resource = DraftScreenshotResource()
 
+
 class BaseUploadedFileResource(WebAPIResource):
     """A base resource representing uploaded files."""
     model = UploadedFile
@@ -2147,9 +2148,8 @@ class BaseUploadedFileResource(WebAPIResource):
         },
         'title': {
             'type': str,
-            'description': "The path of the file, "
-                           "relative to the media directory configured "
-                           "on the Review Board server.",
+            'description': "The path of the file, relative to the media"
+                           " directory configured on the Review Board server.",
         },
         'url': {
             'type': str,
@@ -2178,8 +2178,10 @@ class BaseUploadedFileResource(WebAPIResource):
     def serialize_file_url_field(self, obj):
         return obj.get_absolute_url()
 
+    @webapi_check_local_site
     @webapi_login_required
-    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED)
+    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED,
+                            INVALID_FORM_DATA, NOT_LOGGED_IN)
     @webapi_request_fields(
         required={
             'path': {
@@ -2219,7 +2221,7 @@ class BaseUploadedFileResource(WebAPIResource):
             return DOES_NOT_EXIST
 
         if not review_request.is_mutable_by(request.user):
-            return PERMISSION_DENIED
+            return _no_access_error(request.user)
 
         form_data = request.POST.copy()
         form = UploadFileForm(form_data, request.FILES)
@@ -2240,7 +2242,9 @@ class BaseUploadedFileResource(WebAPIResource):
             self.item_result_key: upfile,
         }
 
+    @webapi_check_local_site
     @webapi_login_required
+    @webapi_response_errors(DOES_NOT_EXIST, NOT_LOGGED_IN, PERMISSION_DENIED)
     @webapi_request_fields(
         optional={
             'caption': {
@@ -2264,7 +2268,7 @@ class BaseUploadedFileResource(WebAPIResource):
             return DOES_NOT_EXIST
 
         if not review_request.is_mutable_by(request.user):
-            return PERMISSION_DENIED
+            return _no_access_error(request.user)
 
         try:
             review_request_draft_resource.prepare_draft(request,
@@ -2332,11 +2336,13 @@ class DraftUploadedFileResource(BaseUploadedFileResource):
     def serialize_caption_field(self, obj):
         return obj.draft_caption or obj.caption
 
+    @webapi_check_local_site
     @webapi_login_required
     @augment_method_from(WebAPIResource)
     def get(self, *args, **kwargs):
         pass
 
+    @webapi_check_local_site
     @webapi_login_required
     @augment_method_from(WebAPIResource)
     def delete(self, *args, **kwargs):
@@ -2353,6 +2359,7 @@ class DraftUploadedFileResource(BaseUploadedFileResource):
         """
         pass
 
+    @webapi_check_local_site
     @webapi_login_required
     @augment_method_from(WebAPIResource)
     def get_list(self, *args, **kwargs):
@@ -2917,6 +2924,7 @@ class ScreenshotCommentResource(BaseScreenshotCommentResource):
 
 screenshot_comment_resource = ScreenshotCommentResource()
 
+
 class ReviewScreenshotCommentResource(BaseScreenshotCommentResource):
     """Provides information on screenshots comments made on a review.
 
@@ -3078,6 +3086,7 @@ class ReviewScreenshotCommentResource(BaseScreenshotCommentResource):
         pass
 
 review_screenshot_comment_resource = ReviewScreenshotCommentResource()
+
 
 class ReviewReplyScreenshotCommentResource(BaseScreenshotCommentResource):
     """Provides information on replies to screenshot comments made on a
@@ -3269,7 +3278,6 @@ class BaseFileCommentResource(WebAPIResource):
     }
 
     uri_object_key = 'comment_id'
-
     allowed_methods = ('GET',)
 
     def get_queryset(self, request, review_request_id, *args, **kwargs):
@@ -3286,6 +3294,7 @@ class BaseFileCommentResource(WebAPIResource):
     def serialize_user_field(self, obj):
         return obj.review.get().user
 
+    @webapi_check_local_site
     @augment_method_from(WebAPIResource)
     def get(self, *args, **kwargs):
         """Returns information on the comment.
@@ -3315,6 +3324,7 @@ class FileCommentResource(BaseFileCommentResource):
         q = q.filter(upfile=file_id)
         return q
 
+    @webapi_check_local_site
     @augment_method_from(BaseFileCommentResource)
     def get_list(self, *args, **kwargs):
         """Returns the list of screenshot comments on a file.
@@ -3325,6 +3335,7 @@ class FileCommentResource(BaseFileCommentResource):
         pass
 
 file_comment_resource = FileCommentResource()
+
 
 class ReviewFileCommentResource(BaseFileCommentResource):
     """Provides information on file comments made on a review.
@@ -3346,6 +3357,8 @@ class ReviewFileCommentResource(BaseFileCommentResource):
         review = comment.review.get()
         return not review.public and review.user == request.user
 
+    @webapi_check_local_site
+    @webapi_response_errors
     @webapi_login_required
     @webapi_request_fields(
         required = {
@@ -3359,8 +3372,7 @@ class ReviewFileCommentResource(BaseFileCommentResource):
             },
         },
     )
-    def create(self, request, file_id, text,
-               *args, **kwargs):
+    def create(self, request, file_id, text, *args, **kwargs):
         """Creates a file comment on a review.
 
         This will create a new comment on a file as part of a review.
@@ -3375,11 +3387,11 @@ class ReviewFileCommentResource(BaseFileCommentResource):
             return DOES_NOT_EXIST
 
         if not review_resource.has_modify_permissions(request, review):
-            return PERMISSION_DENIED
+            return _no_access_error(request.user)
 
         try:
             upfile = UploadedFile.objects.get(pk=file_id,
-                                                review_request=review_request)
+                                              review_request=review_request)
         except ObjectDoesNotExist:
             return INVALID_FORM_DATA, {
                 'fields': {
@@ -3397,8 +3409,9 @@ class ReviewFileCommentResource(BaseFileCommentResource):
             self.item_result_key: new_comment,
         }
 
+    @webapi_check_local_site
     @webapi_login_required
-    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED)
+    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED, NOT_LOGGED_IN)
     @webapi_request_fields(
         optional = {
             'text': {
@@ -3421,7 +3434,7 @@ class ReviewFileCommentResource(BaseFileCommentResource):
             return DOES_NOT_EXIST
 
         if not review_resource.has_modify_permissions(request, review):
-            return PERMISSION_DENIED
+            return _no_access_error(request.user)
 
         for field in ('text'):
             value = kwargs.get(field, None)
@@ -3455,6 +3468,7 @@ class ReviewFileCommentResource(BaseFileCommentResource):
 
 review_file_comment_resource = ReviewFileCommentResource()
 
+
 class ReviewReplyFileCommentResource(BaseFileCommentResource):
     """Provides information on replies to file comments made on a
     review reply.
@@ -3479,9 +3493,10 @@ class ReviewReplyFileCommentResource(BaseFileCommentResource):
         q = q.filter(review=reply_id, review__base_reply_to=review_id)
         return q
 
+    @webapi_check_local_site
     @webapi_login_required
     @webapi_response_errors(DOES_NOT_EXIST, INVALID_FORM_DATA,
-                            PERMISSION_DENIED)
+                            PERMISSION_DENIED, NOT_LOGGED_IN)
     @webapi_request_fields(
         required = {
             'reply_to_id': {
@@ -3508,7 +3523,7 @@ class ReviewReplyFileCommentResource(BaseFileCommentResource):
             return DOES_NOT_EXIST
 
         if not review_reply_resource.has_modify_permissions(request, reply):
-            return PERMISSION_DENIED
+            return _no_access_error(request.user)
 
         try:
             comment = review_file_comment_resource.get_object(
@@ -3534,8 +3549,9 @@ class ReviewReplyFileCommentResource(BaseFileCommentResource):
             self.item_result_key: new_comment,
         }
 
+    @webapi_check_local_site
     @webapi_login_required
-    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED)
+    @webapi_response_errors(DOES_NOT_EXIST, PERMISSION_DENIED, NOT_LOGGED_IN)
     @webapi_request_fields(
         required = {
             'text': {
@@ -3558,7 +3574,7 @@ class ReviewReplyFileCommentResource(BaseFileCommentResource):
             return DOES_NOT_EXIST
 
         if not review_reply_resource.has_modify_permissions(request, reply):
-            return PERMISSION_DENIED
+            return _no_access_error(request.user)
 
         for field in ('text',):
             value = kwargs.get(field, None)

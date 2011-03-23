@@ -1030,6 +1030,7 @@ $.extend(RB.ReviewReply.prototype, {
     }
 });
 
+
 RB.UploadedFile = function(review_request, id) {
     this.review_request = review_request;
     this.id = id;
@@ -1159,7 +1160,7 @@ $.extend(RB.UploadedFile.prototype, {
         var blob = "";
         blob += "--" + boundary + "\r\n";
         blob += 'Content-Disposition: form-data; name="path"; ' +
-                           'filename="' + this.file.name + '"\r\n';
+                'filename="' + this.file.name + '"\r\n';
         blob += 'Content-Type: application/octet-stream\r\n';
         blob += '\r\n';
         blob += this.uploaded_file.getAsBinary();
@@ -1352,6 +1353,7 @@ $.extend(RB.FileComment.prototype, {
     }
 });
 
+
 RB.UploadedFileCommentReply = function(reply, id, reply_to_id) {
     this.id = id;
     this.reply = reply;
@@ -1366,7 +1368,7 @@ RB.UploadedFileCommentReply = function(reply, id, reply_to_id) {
 $.extend(RB.UploadedFileCommentReply.prototype, {
     ready: function(on_ready) {
         if (this.loaded) {
-            on_ready();
+            on_ready.apply(this, arguments);
         } else {
             this._load(on_ready);
         }
@@ -1461,13 +1463,13 @@ $.extend(RB.UploadedFileCommentReply.prototype, {
         var self = this;
 
         if (!self.id) {
-            on_done();
+            on_done.apply(this, arguments);
             return;
         }
 
         self.reply.ready(function() {
             if (!self.reply.loaded) {
-                on_done();
+                on_done.apply(this, arguments);
                 return;
             }
 
@@ -1779,11 +1781,9 @@ $.extend(RB.ScreenshotComment.prototype, {
     },
 
     deleteIfEmpty: function() {
-        if (this.text != "") {
-            return;
-        }
-
-        this.deleteComment();
+        if (this.text == "") {
+			this.deleteComment();
+		}
     },
 
     _deleteAndDestruct: function() {
